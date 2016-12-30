@@ -24,10 +24,14 @@
 				</select>
 				<p><label>Show Hint<br><input type="checkbox" v-model="question.hint" placeholder="Question Hint"></label></p>
 				<p><label>Correct to Proceed<br><input type="checkbox" v-model="question.correctToProceed" ></label></p>
-				Feedback: <textarea class="form-control" v-model="question.feedback" placeholder="Feedback if answered incorrectly"></textarea>
+				<div v-if="question.type !== 'FREETEXT'">
+					Feedback: <textarea class="form-control" v-model="question.feedback" placeholder="Feedback if answered incorrectly"></textarea>
+				</div>
 			</div>
-			<div class="answers col-xs-6">
+			<div class="answers col-xs-6" v-if="question.type === 'FREETEXT'">Answer will be hand-graded when the student submits it.</div>
+			<div class="answers col-xs-6" v-if="question.type !== 'FREETEXT'">
 				Answers:
+				<p class="text-warning" v-if="question.type === 'KEYWORD'">HTML does not work in keyword answers</p>
 				<div
 					v-for="(a, index) of question.answers"
 					class="answer"
@@ -37,12 +41,19 @@
 						@click="question.answers.splice(index, 1)"
 					>Delete</button>
 					<span class="answer__number">{{index + 1}}</span>
-					Correct: <input type="checkbox" v-model="a.correct">
-					<button
-						class="btn btn-default"
-						@click="() => {a.text = encodeHtml(a.text)}"
-					>Encode</button>
-					<textarea class="form-control" type="text" v-model="a.text" placeholder="Answer Text"></textarea>
+					<span v-if="question.type === 'MULTICHOICE'">
+						Correct: <input type="checkbox" v-model="a.correct">
+						<button
+							class="btn btn-default"
+							@click="() => {a.text = encodeHtml(a.text)}"
+						>Encode</button>
+					</span>
+					<textarea
+						class="form-control"
+						type="text"
+						v-model="a.text"
+						placeholder="Answer Text"
+					></textarea>
 				</div>
 				<button
 					class="btn btn-default"
@@ -56,21 +67,32 @@
 						<div class="rendered__question"
 							v-html="renderQuestion()"
 						></div>
-						<h3 v-if="question.feedback">Feedback</h3>
-						<div class="rendered__feedback"
-							v-if="question.feedback"
-							v-html="renderFeedback()"
-						></div>
+						<div v-if="question.type !== 'FREETEXT'">
+							<h3 v-if="question.feedback">Feedback</h3>
+							<div class="rendered__feedback"
+								v-if="question.feedback"
+								v-html="renderFeedback()"
+							></div>
+						</div>
 					</div>
 					<div class="col-xs-6">
 						<h3>Answers:</h3>
 						<div class="rendered__answers">
 							<div
+								v-if="question.type === 'MULTICHOICE'"
 								class="rendered__answer"
 								v-for="a of question.answers"
 							>
 								<div v-html="renderAnswer(a)"></div>
 							</div>
+							<div
+								v-if="question.type === 'KEYWORD'"
+								class="rendered__answer"
+								v-for="a of question.answers"
+							>
+								<div v-html="a.text"></div>
+							</div>
+							
 						</div>
 					</div>
 				</div>
@@ -107,12 +129,21 @@ export default {
 	.question {
 		border: 1px solid #ccc;
 		padding: 2rem;
+		margin-top: 2rem;
 	}
+	.question:first-child {
+		margin-top: 0;
+	}
+	
 	textarea.form-control {
 		height: 60px;
 		font-family: consolas;
 	}
 
+	.rendered {
+		border-top: 1px solid #ccc;
+		margin-top: 2rem;
+	}
 	.rendered__question, .rendered__answers, .rendered__feedback {
 		margin: 0 auto;
 		border: 1px solid #ccc;

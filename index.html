@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="./static/bootstrap.min.css">
     <script src="./static/papaparse.min.js"></script>
     <script src="./static/FileSaver.min.js"></script>
+    <script>
+        window.onbeforeunload = function() {
+            return 'Changes will not be saved.';
+        };
+    </script>
 </head>
 
 <body>
